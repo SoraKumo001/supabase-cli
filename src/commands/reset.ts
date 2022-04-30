@@ -3,6 +3,7 @@ import {
   databaseExecExsFiles,
   databaseExecFiles,
   databaseMigrate,
+  databaseMigrateUser,
 } from "../libs/database";
 
 export const reset = async () => {
@@ -47,11 +48,11 @@ $$;
   await databaseExecFiles("supabase/docker/volumes/db/init");
 
   console.log("Migration of storage-api");
-  await databaseMigrate("supabase/storage-api");
+  await databaseMigrate("supabase/storage-api", "storage");
 
   console.log("Migration of realtime-api");
   await databaseExecExsFiles("supabase/realtime");
 
-  console.log("Migration of user");
-  await databaseExecFiles("supabase/migrations");
+  console.log("Migration of user files");
+  await databaseMigrateUser("supabase/migrations");
 };

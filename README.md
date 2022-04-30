@@ -2,7 +2,7 @@
 
 ## description
 
-Create a cli environment for supabase.
+Create a cli environment for supabase.  
 The Docker environment to be used for construction is obtained from the latest repository of supabase.
 
 ## usage
@@ -23,5 +23,8 @@ Commands:
   update          Update supabase
   reset           Database initialization
   info            View access to supabase
+  migration       [command]
+    create [name] Create migration
+    up            Apply migrations
   help [command]  display help for command
 ```
