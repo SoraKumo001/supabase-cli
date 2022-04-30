@@ -18,8 +18,10 @@ Commands:
   init            Initialize supabase
   start           Launch supabase
   stop            Stop supabase
+  restart         Restart supabase
   remove          Remove supabase
   update          Update supabase
   reset           Database initialization
+  info            View access to supabase
   help [command]  display help for command
 ```
