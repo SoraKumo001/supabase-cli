@@ -12,7 +12,7 @@ export const spawn = (
   { params = [], stdio }: { params?: string[]; stdio?: StdioOptions } = {}
 ) => {
   return new Promise((resolve) => {
-    const args = command.split(" ");
+    const args = command.split(" ").filter((v) => v.length);
     child_process
       .spawn(args[0], [...args.slice(1), ...params], {
         stdio: stdio ? stdio : "inherit",

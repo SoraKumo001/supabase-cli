@@ -1,22 +1,33 @@
 import { isDirectory, spawn } from "../libs/stdlibs";
 import { promises as fs } from "fs";
-export const init = async () => {
-  if (!isDirectory("supabase")) {
-    await fs.mkdir("supabase").catch((v) => v);
-    await spawn(
-      "git clone --progress --no-checkout --depth 1 https://github.com/supabase/supabase supabase"
-    );
-    process.chdir("supabase");
-    await spawn("git sparse-checkout set docker");
-    await spawn("git checkout");
-    fs.copyFile("docker/.env.example", "docker/.env");
+import { downloadGitHubFiles } from "../libs/github";
+import { replaceEnv, replaceKong } from "../libs/supabase";
 
-    await spawn(
-      "git clone --progress --no-checkout --depth 1 https://github.com/supabase/storage-api"
+export const init = async (forced: boolean = false) => {
+  if (!isDirectory("supabase") || forced) {
+    await fs.mkdir("supabase").catch(() => undefined);
+    await downloadGitHubFiles(
+      "https://github.com/supabase/supabase",
+      "master",
+      "docker/",
+      "supabase/docker"
     );
-    process.chdir("storage-api");
-    await spawn("git sparse-checkout set migrations/tenant");
-    await spawn("git checkout");
-    process.chdir("../..");
+    if (!(await fs.stat("supabase/docker/.env").catch(() => undefined)))
+      fs.copyFile("supabase/docker/.env.example", "supabase/docker/.env");
+
+    await downloadGitHubFiles(
+      "https://github.com/supabase/storage-api",
+      "master",
+      "migrations/tenant/",
+      "supabase/storage-api"
+    );
+    await downloadGitHubFiles(
+      "https://github.com/supabase/realtime",
+      "master",
+      "server/priv/repo/migrations",
+      "supabase/realtime"
+    );
   }
+  await replaceEnv();
+  await replaceKong();
 };

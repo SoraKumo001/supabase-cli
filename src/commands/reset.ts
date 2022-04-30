@@ -1,4 +1,9 @@
-import { databaseExec, databaseExecFiles } from "../libs/database";
+import {
+  databaseExec,
+  databaseExecExsFiles,
+  databaseExecFiles,
+  databaseMigrate,
+} from "../libs/database";
 
 export const reset = async () => {
   console.log("Create database");
@@ -40,8 +45,13 @@ $$;
   );
   console.log("Initialization of supabase");
   await databaseExecFiles("supabase/docker/volumes/db/init");
+
   console.log("Migration of storage-api");
-  await databaseExecFiles("supabase/storage-api/migrations/tenant");
+  await databaseMigrate("supabase/storage-api");
+
+  console.log("Migration of realtime-api");
+  await databaseExecExsFiles("supabase/realtime");
+
   console.log("Migration of user");
   await databaseExecFiles("supabase/migrations");
 };

@@ -1,8 +1,10 @@
 #!/usr/bin/env node
 import { program } from "commander";
+import { info } from "./commands/info";
 import { init } from "./commands/init";
 import { remove } from "./commands/remove";
 import { reset } from "./commands/reset";
+import { restart } from "./commands/restart";
 import { start } from "./commands/start";
 import { stop } from "./commands/stop";
 import { update } from "./commands/update";
@@ -12,7 +14,7 @@ program
   .command("init")
   .description("Initialize supabase")
   .action(() => {
-    init();
+    init(true);
   });
 
 program
@@ -26,6 +28,12 @@ program
   .description("Stop supabase")
   .action(() => {
     stop();
+  });
+program
+  .command("restart")
+  .description("Restart supabase")
+  .action(() => {
+    restart();
   });
 program
   .command("remove")
@@ -45,5 +53,10 @@ program
   .action(() => {
     reset();
   });
-
+program
+  .command("info")
+  .description("View access to supabase")
+  .action(() => {
+    info();
+  });
 program.parse(process.argv);
