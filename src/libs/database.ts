@@ -22,9 +22,12 @@ export const execDatabase = async ({
   if (!client) return false;
 
   try {
-    if (!values)
-      return await client.query(query).catch((e) => console.error(e));
-    return await client.query(query, values).catch((e) => console.error(e));
+    return (
+      (await client.query(query, values).catch((e) => {
+        console.error(e);
+        return undefined;
+      })) !== undefined
+    );
   } finally {
     await client.end();
   }
@@ -195,16 +198,19 @@ export const migrateDatabaseUser = async ({
         if (r.rowCount === 0) {
           console.log("  " + file);
           await client.query("begin;");
+          if (!(await client.query(value))) {
+            await client.query("rollback;");
+            break;
+          }
           await client.query(
             `insert into "${schema}".migrations values($1,default)`,
             [file]
           );
-
-          await execDatabase({ query: value });
           await client.query("commit;");
         }
       }
     }
+    await client.query("select graphql.rebuild_schema();");
   } finally {
     await client.end();
   }
@@ -346,7 +352,19 @@ export const resetDatabase = async (params?: {
     password,
     dir: "supabase/docker/volumes/db/init",
   });
-
+  await execDatabase({
+    host,
+    port,
+    password,
+    query: `
+ALTER TABLE auth.users add IF NOT EXISTS reauthentication_token character varying(255) default '';
+ALTER TABLE auth.users add IF NOT EXISTS reauthentication_sent_at timestamp(6) with time zone;
+ALTER ROLE authenticator WITH NOSUPERUSER NOINHERIT NOCREATEROLE NOCREATEDB LOGIN NOREPLICATION NOBYPASSRLS PASSWORD 'SCRAM-SHA-256$4096:02GshyCgAmMuR80elRG3zA==$iGHHc+ke7uTIAH3R81LB96RSHK3mQBqpgntQYKWYbEc=:omgA+pHNI9zhml67pswdvF8wxr4X9McFVMXskcjshkQ=';
+ALTER ROLE supabase_admin WITH SUPERUSER INHERIT CREATEROLE CREATEDB LOGIN REPLICATION BYPASSRLS PASSWORD 'SCRAM-SHA-256$4096:Ek3JpfTwntQPt3nH8RX/nQ==$gR2VWqVgd184dcWFO1VuxfvS54Kc1nHO28GOgoyNef0=:4/u9yjgNAsxn/Ef8CCdsL9YrEWhlH1GK2k3K4Wr+xoI=';
+ALTER ROLE supabase_auth_admin WITH NOSUPERUSER NOINHERIT CREATEROLE NOCREATEDB LOGIN NOREPLICATION NOBYPASSRLS PASSWORD 'SCRAM-SHA-256$4096:KwpL1tST/0JDjAM20fXN7g==$5ogPaRAdtoXGJYD4a5CKnR/IpBpO/QvNGdBQ82TtG/Q=:pnEvyPekmXg9GaTXRBUzlIoo4WrDRtCA8qO0MvGat2Y=';
+ALTER ROLE supabase_storage_admin WITH NOSUPERUSER NOINHERIT CREATEROLE NOCREATEDB LOGIN NOREPLICATION NOBYPASSRLS PASSWORD 'SCRAM-SHA-256$4096:I5FEUDziWXHfELobqERsug==$Kia0Uk1GsB7PaotwpFQmCZHL4IDx69hP+b/qNP2TW4c=:jZDB9li42uENmR1UrYKXTy+gMC6025YSq9+2q7rBUDk=';
+`,
+  });
   console.log("Migration of storage-api");
   await migrateDatabase({
     host,
@@ -356,15 +374,23 @@ export const resetDatabase = async (params?: {
     schema: "storage",
   });
 
-  console.log("Migration of realtime-api");
-  await execDatabaseExsFiles({
+  if (!host) {
+    console.log("Migration of realtime-api");
+    await execDatabaseExsFiles({
+      host,
+      port,
+      password,
+      dir: "supabase/realtime",
+    });
+  }
+
+  console.log("Migration of user files");
+  await migrateDatabaseUser({
     host,
     port,
     password,
-    dir: "supabase/realtime",
+    dir: "supabase/migrations",
   });
-
-  console.log("Migration of user files");
   await migrateDatabaseUser({
     host,
     port,

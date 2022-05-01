@@ -31,10 +31,12 @@ Commands:
   remote              [command]
     restore <host> <password> <filename>  Restore remote databases
     backup <host> <password> <filename>   Backup remote databases
+    migration <host> <password>           Migration remote databases
+    reset <host> <password>               Reset the remote
   help [command]  display help for command
 ```
 
-## When making remote backups
+## For remote backup and remote reset
 
 You will need superuser privileges, so run the following command from SQLEditor on the web.
 
