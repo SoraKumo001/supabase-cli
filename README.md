@@ -26,7 +26,6 @@ Commands:
   backup <filename>   Backup database
   restore <filename>  Restore database
   migration           [command]
-  migration           [command]
     create [name]     Create migration
     up                Apply migrations
   help [command]  display help for command
