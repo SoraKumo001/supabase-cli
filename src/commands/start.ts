@@ -4,7 +4,7 @@ import { outputStatus } from "../libs/supabase";
 
 export const start = async () => {
   await init();
-  await execDocker("up");
+  await execDocker("up -d");
 
   await outputStatus();
 };

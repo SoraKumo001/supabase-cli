@@ -14,7 +14,7 @@ export const init = async (forced = false) => {
     );
     if (!(await fs.stat("supabase/docker/.env").catch(() => undefined)))
       fs.copyFile("supabase/docker/.env.example", "supabase/docker/.env");
-
+    await fs.writeFile("supabase/docker/dev/data.sql", "");
     await downloadGitHubFiles(
       "https://github.com/supabase/storage-api",
       "master",

@@ -28,9 +28,10 @@ export const outputStatus = async () => {
 
   if (config) {
     const { STUDIO_PORT, KONG_HTTP_PORT, ANON_KEY, SERVICE_ROLE_KEY } = config;
-    console.log(`STUDIO: http://localhost:${STUDIO_PORT}/`);
+    console.log(`STUDIO:   http://localhost:${STUDIO_PORT}/`);
     console.log(`REST API: http://localhost:${KONG_HTTP_PORT}/rest/v1/`);
-    console.log(`GraphQL: http://localhost:${KONG_HTTP_PORT}/graphql/v1`);
+    console.log(`GraphQL:  http://localhost:${KONG_HTTP_PORT}/graphql/v1`);
+    console.log(`Mail:     http://localhost:9000/`);
     console.log(`ANON_KEY:\n ${ANON_KEY}`);
     console.log(`SERVICE_ROLE_KEY:\n ${SERVICE_ROLE_KEY}`);
   }
