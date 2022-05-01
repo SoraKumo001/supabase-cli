@@ -15,16 +15,19 @@ Options:
   -h, --help      display help for command
 
 Commands:
-  init            Initialize supabase
-  start           Launch supabase
-  stop            Stop supabase
-  restart         Restart supabase
-  remove          Remove supabase
-  update          Update supabase
-  reset           Database initialization
-  info            View access to supabase
-  migration       [command]
-    create [name] Create migration
-    up            Apply migrations
+  init                Initialize supabase
+  start               Launch supabase
+  stop                Stop supabase
+  restart             Restart supabase
+  remove              Remove supabase
+  update              Update supabase
+  reset               Database initialization
+  info                View access to supabase
+  backup <filename>   Backup database
+  restore <filename>  Restore database
+  migration           [command]
+  migration           [command]
+    create [name]     Create migration
+    up                Apply migrations
   help [command]  display help for command
 ```
