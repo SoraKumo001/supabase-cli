@@ -1,5 +1,5 @@
-import { databaseMigrateUser } from "../../libs/database";
-export const up = async (name?: string) => {
+import { migrateDatabaseUser } from "../../libs/database";
+export const up = async () => {
   console.log("Migration of user");
-  await databaseMigrateUser("supabase/migrations");
+  await migrateDatabaseUser("supabase/migrations");
 };

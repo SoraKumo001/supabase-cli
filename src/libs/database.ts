@@ -1,9 +1,9 @@
-import { promises as fs } from "fs";
-import { getEnv } from "./stdlibs";
+import { promises as fs, openSync, closeSync } from "fs";
+import { getEnv, spawn } from "./stdlibs";
 import { Client } from "pg";
 import { migrate } from "postgres-migrations";
 
-export const databaseExec = async (
+export const execDatabase = async (
   dbname: string,
   query: string,
   values?: unknown[]
@@ -18,7 +18,7 @@ export const databaseExec = async (
     await client.end();
   }
 };
-export const databaseExecFiles = async (dir: string) => {
+export const execDatabaseFiles = async (dir: string) => {
   const files = await (await fs.readdir(dir).catch(() => [])).sort();
   for (const file of files) {
     console.log("  " + file);
@@ -26,13 +26,13 @@ export const databaseExecFiles = async (dir: string) => {
       .readFile(`${dir}/${file}`, "utf8")
       .catch(() => undefined);
     if (value) {
-      await databaseExec("postgres", value);
+      await execDatabase("postgres", value);
     }
   }
 };
-export const databaseExecExsFiles = async (dir: string) => {
+export const execDatabaseExsFiles = async (dir: string) => {
   const files = await (await fs.readdir(dir).catch(() => [])).sort();
-  await databaseExec(
+  await execDatabase(
     "postgres",
     `create table IF NOT EXISTS realtime.schema_migrations (
     version bigint not null
@@ -48,10 +48,10 @@ export const databaseExecExsFiles = async (dir: string) => {
       const sqls = [...value.matchAll(/execute.*?"([\s\S]*?[^\\])"/gm)].map(
         (v) => v[1].replace(/^[ ]*/gm, "")
       );
-      for (const sql of sqls) await databaseExec("postgres", sql);
+      for (const sql of sqls) await execDatabase("postgres", sql);
       const id = file.match(/([^/\\]*?)_.*$/)?.[1];
       id &&
-        (await databaseExec(
+        (await execDatabase(
           "postgres",
           `insert into realtime.schema_migrations values($1,now() at time zone 'utc')`,
           [Number(id)]
@@ -69,7 +69,7 @@ export const getClient = async (dbname: string) => {
   };
   return new Client(dbConfig);
 };
-export const databaseMigrate = async (
+export const migrateDatabase = async (
   migrationsDirectory: string,
   schema: string
 ) => {
@@ -89,11 +89,11 @@ export const databaseMigrate = async (
     await client.end();
   }
 };
-export const databaseMigrateUser = async (dir: string) => {
+export const migrateDatabaseUser = async (dir: string) => {
   const files = await (await fs.readdir(dir).catch(() => [])).sort();
   const client = await getClient("postgres");
   try {
-    const schema = "supabase";
+    const schema = "cli";
     await client.connect();
     await client.query(`create schema IF NOT EXISTS "${schema}"`);
     await client.query(`CREATE TABLE IF NOT EXISTS "${schema}".migrations (
@@ -118,7 +118,7 @@ export const databaseMigrateUser = async (dir: string) => {
             [file]
           );
 
-          await databaseExec("postgres", value);
+          await execDatabase("postgres", value);
           await client.query("commit;");
         }
       }
@@ -126,4 +126,52 @@ export const databaseMigrateUser = async (dir: string) => {
   } finally {
     await client.end();
   }
+};
+
+export const dumpDatabase = async (fileName: string) => {
+  const project = process.env.npm_package_name || "supabase";
+  const stream = openSync(fileName, "w");
+  if (!stream) return false;
+
+  const code = await spawn(
+    `docker compose -p ${project} -f supabase/docker/docker-compose.yml exec db pg_dump postgres://postgres@localhost/postgres`,
+    { stdio: ["inherit", stream, "inherit"] }
+  );
+  closeSync(stream);
+  return code === 0;
+};
+
+export const restoreDatabase = async (fileName: string) => {
+  const project = process.env.npm_package_name || "supabase";
+  const stream = openSync(fileName, "r");
+  if (!stream) return false;
+
+  const code = await spawn(
+    `docker compose -p ${project} -f supabase/docker/docker-compose.yml exec db psql postgres://postgres@localhost/postgres`,
+    { stdio: [stream, "inherit", "inherit"] }
+  );
+  closeSync(stream);
+  return code === 0;
+};
+
+export const resetDatabase = async () => {
+  await execDatabase("template1", `DROP DATABASE IF EXISTS old;`);
+  await execDatabase(
+    "template1",
+    `
+do $$ 
+  begin 
+    if (select true from pg_database where datname='postgres') then
+      EXECUTE 'SELECT pg_terminate_backend(pid) FROM pg_stat_activity WHERE datname = ''postgres''';
+      ALTER DATABASE postgres RENAME TO old;
+    end if;
+  end; 
+$$;
+`
+  );
+  await execDatabase(
+    "template1",
+    "CREATE DATABASE postgres TEMPLATE template0;"
+  );
+  await execDatabase("template1", `DROP DATABASE IF EXISTS old;`);
 };

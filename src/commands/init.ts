@@ -1,9 +1,9 @@
-import { isDirectory, spawn } from "../libs/stdlibs";
+import { isDirectory } from "../libs/stdlibs";
 import { promises as fs } from "fs";
 import { downloadGitHubFiles } from "../libs/github";
 import { replaceEnv, replaceKong } from "../libs/supabase";
 
-export const init = async (forced: boolean = false) => {
+export const init = async (forced = false) => {
   if (!isDirectory("supabase") || forced) {
     await fs.mkdir("supabase").catch(() => undefined);
     await downloadGitHubFiles(
