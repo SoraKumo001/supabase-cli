@@ -28,5 +28,16 @@ Commands:
   migration           [command]
     create [name]     Create migration
     up                Apply migrations
+  remote              [command]
+    restore <host> <password> <filename>  Restore remote databases
+    backup <host> <password> <filename>   Backup remote databases
   help [command]  display help for command
+```
+
+## When making remote backups
+
+You will need superuser privileges, so run the following command from SQLEditor on the web.
+
+```sql
+alter role postgres with superuser;
 ```

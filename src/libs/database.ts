@@ -1,15 +1,26 @@
 import { promises as fs, openSync, closeSync } from "fs";
 import { getEnv, spawn } from "./stdlibs";
-import { Client } from "pg";
+import { Client, ClientConfig } from "pg";
 import { migrate } from "postgres-migrations";
 
-export const execDatabase = async (
-  dbname: string,
-  query: string,
-  values?: unknown[]
-) => {
-  const client = await getClient(dbname);
-  await client.connect();
+export const execDatabase = async ({
+  host,
+  dbname = "postgres",
+  port,
+  password,
+  query,
+  values,
+}: {
+  host?: string;
+  dbname?: string;
+  port?: number;
+  password?: string;
+  query: string;
+  values?: unknown[];
+}) => {
+  const client = await getClient({ host, port, dbname, password });
+  if (!client) return false;
+
   try {
     if (!values)
       return await client.query(query).catch((e) => console.error(e));
@@ -18,27 +29,49 @@ export const execDatabase = async (
     await client.end();
   }
 };
-export const execDatabaseFiles = async (dir: string) => {
+export const execDatabaseFiles = async ({
+  host,
+  port,
+  password,
+  dir,
+}: {
+  host?: string;
+  port?: number;
+  password?: string;
+  dir: string;
+}) => {
   const files = await (await fs.readdir(dir).catch(() => [])).sort();
   for (const file of files) {
-    console.log("  " + file);
     const value = await fs
       .readFile(`${dir}/${file}`, "utf8")
       .catch(() => undefined);
     if (value) {
-      await execDatabase("postgres", value);
+      console.log("  " + file);
+      await execDatabase({ host, port, password, query: value });
     }
   }
 };
-export const execDatabaseExsFiles = async (dir: string) => {
+export const execDatabaseExsFiles = async ({
+  host,
+  port,
+  password,
+  dir,
+}: {
+  host?: string;
+  port?: number;
+  password?: string;
+  dir: string;
+}) => {
   const files = await (await fs.readdir(dir).catch(() => [])).sort();
-  await execDatabase(
-    "postgres",
-    `create table IF NOT EXISTS realtime.schema_migrations (
+  await execDatabase({
+    host,
+    port,
+    password,
+    query: `create table IF NOT EXISTS realtime.schema_migrations (
     version bigint not null
     , inserted_at timestamp(0) without time zone
-    , primary key (version));`
-  );
+    , primary key (version));`,
+  });
   for (const file of files) {
     console.log("  " + file);
     const value = await fs
@@ -48,34 +81,70 @@ export const execDatabaseExsFiles = async (dir: string) => {
       const sqls = [...value.matchAll(/execute.*?"([\s\S]*?[^\\])"/gm)].map(
         (v) => v[1].replace(/^[ ]*/gm, "")
       );
-      for (const sql of sqls) await execDatabase("postgres", sql);
+      for (const sql of sqls) await execDatabase({ query: sql });
       const id = file.match(/([^/\\]*?)_.*$/)?.[1];
       id &&
-        (await execDatabase(
-          "postgres",
-          `insert into realtime.schema_migrations values($1,now() at time zone 'utc')`,
-          [Number(id)]
-        ));
+        (await execDatabase({
+          host,
+          port,
+          password,
+          query: `insert into realtime.schema_migrations values($1,now() at time zone 'utc')`,
+          values: [Number(id)],
+        }));
     }
   }
 };
-export const getClient = async (dbname: string) => {
+export const getClient = async (params?: {
+  host?: string;
+  port?: number;
+  dbname?: string;
+  password?: string;
+}) => {
+  const {
+    host = "localhost",
+    port: portSrc,
+    dbname = "postgres",
+    password: passwordSrc,
+  } = params || {};
   const config = await getEnv();
-  const password = config?.POSTGRES_PASSWORD;
-  const port = config?.POSTGRES_PORT;
-  const dbConfig = {
-    connectionString: `postgresql://postgres:${password}@localhost:${port}/${dbname}`,
+  const password = passwordSrc || config?.POSTGRES_PASSWORD;
+  const port = portSrc || Number(config?.POSTGRES_PORT);
+  const dbConfig: ClientConfig = {
+    host: host ? host : "localhost",
+    port,
+    password,
+    user: "postgres",
+    database: dbname,
     connectionTimeoutMillis: 10_000,
   };
-  return new Client(dbConfig);
+  const client = new Client(dbConfig);
+  let isError = false;
+  await client.connect((err) => {
+    if (err) {
+      console.error(err);
+      isError = true;
+    }
+  });
+  return isError ? undefined : client;
 };
-export const migrateDatabase = async (
-  migrationsDirectory: string,
-  schema: string
-) => {
-  const client = await getClient("postgres");
+export const migrateDatabase = async ({
+  host,
+  port,
+  dbname,
+  password,
+  dir,
+  schema,
+}: {
+  host?: string;
+  port?: number;
+  dbname?: string;
+  password?: string;
+  dir: string;
+  schema: string;
+}) => {
+  const client = await getClient({ host, port, dbname, password });
+  if (!client) return false;
   try {
-    await client.connect();
     await client.query(`create schema IF NOT EXISTS "${schema}"`);
     await client.query(`SET search_path to "${schema}"`);
     await client.query(`CREATE TABLE IF NOT EXISTS "${schema}".migrations (
@@ -84,17 +153,30 @@ export const migrateDatabase = async (
   hash varchar(40) NOT NULL, -- sha1 hex encoded hash of the file name and contents, to ensure it hasn't been altered since applying the migration
   executed_at timestamp DEFAULT current_timestamp
 );`);
-    await migrate({ client }, migrationsDirectory);
+    await migrate({ client }, dir);
   } finally {
     await client.end();
   }
 };
-export const migrateDatabaseUser = async (dir: string) => {
+export const migrateDatabaseUser = async ({
+  host,
+  port,
+  dbname,
+  password,
+  dir,
+}: {
+  host?: string;
+  port?: number;
+  dbname?: string;
+  password?: string;
+  dir: string;
+}) => {
   const files = await (await fs.readdir(dir).catch(() => [])).sort();
-  const client = await getClient("postgres");
+  const client = await getClient({ host, port, dbname, password });
+  if (!client) return false;
   try {
     const schema = "cli";
-    await client.connect();
+
     await client.query(`create schema IF NOT EXISTS "${schema}"`);
     await client.query(`CREATE TABLE IF NOT EXISTS "${schema}".migrations (
   name varchar(256) PRIMARY KEY,
@@ -118,7 +200,7 @@ export const migrateDatabaseUser = async (dir: string) => {
             [file]
           );
 
-          await execDatabase("postgres", value);
+          await execDatabase({ query: value });
           await client.query("commit;");
         }
       }
@@ -128,37 +210,82 @@ export const migrateDatabaseUser = async (dir: string) => {
   }
 };
 
-export const dumpDatabase = async (fileName: string) => {
+export const dumpDatabase = async ({
+  host,
+  port,
+  password,
+  fileName,
+}: {
+  host?: string;
+  port?: number;
+  password?: string;
+  fileName: string;
+}) => {
   const project = process.env.npm_package_name || "supabase";
   const stream = openSync(fileName, "w");
   if (!stream) return false;
-
   const code = await spawn(
-    `docker compose -p ${project} -f supabase/docker/docker-compose.yml exec db pg_dump postgres://postgres@localhost/postgres`,
+    `docker compose -p ${project} -f supabase/docker/docker-compose.yml exec db pg_dump -c --if-exists postgres://postgres${
+      password ? ":" + password : ""
+    }@${host || "localhost"}:${port || 5432}/postgres`,
     { stdio: ["inherit", stream, "inherit"] }
   );
   closeSync(stream);
   return code === 0;
 };
 
-export const restoreDatabase = async (fileName: string) => {
+export const restoreDatabase = async ({
+  host,
+  port,
+  password,
+  fileName,
+}: {
+  host?: string;
+  port?: number;
+  password?: string;
+  fileName: string;
+}) => {
   const project = process.env.npm_package_name || "supabase";
   const stream = openSync(fileName, "r");
   if (!stream) return false;
 
   const code = await spawn(
-    `docker compose -p ${project} -f supabase/docker/docker-compose.yml exec db psql postgres://postgres@localhost/postgres`,
+    `docker compose -p ${project} -f supabase/docker/docker-compose.yml exec db psql postgres://postgres${
+      password ? ":" + password : ""
+    }@${host || "localhost"}:${port || 5432}/postgres`,
     { stdio: [stream, "inherit", "inherit"] }
   );
   closeSync(stream);
   return code === 0;
 };
 
-export const resetDatabase = async () => {
-  await execDatabase("template1", `DROP DATABASE IF EXISTS old;`);
-  await execDatabase(
-    "template1",
-    `
+export const clearDatabase = async (params?: {
+  host?: string;
+  port?: number;
+  password?: string;
+}) => {
+  const { host, port, password } = params || {};
+
+  await execDatabase({
+    host,
+    port,
+    password,
+    dbname: "template1",
+    query: `GRANT pg_signal_backend TO postgres;`,
+  });
+  await execDatabase({
+    host,
+    port,
+    password,
+    dbname: "template1",
+    query: `DROP DATABASE IF EXISTS old;`,
+  });
+  await execDatabase({
+    host,
+    port,
+    password,
+    dbname: "template1",
+    query: `
 do $$ 
   begin 
     if (select true from pg_database where datname='postgres') then
@@ -167,11 +294,81 @@ do $$
     end if;
   end; 
 $$;
-`
-  );
-  await execDatabase(
-    "template1",
-    "CREATE DATABASE postgres TEMPLATE template0;"
-  );
-  await execDatabase("template1", `DROP DATABASE IF EXISTS old;`);
+`,
+  });
+  await execDatabase({
+    dbname: "template1",
+    host,
+    port,
+    password,
+    query: "CREATE DATABASE postgres TEMPLATE template0;",
+  });
+  await execDatabase({
+    dbname: "template1",
+    host,
+    port,
+    password,
+    query: "DROP DATABASE IF EXISTS old;",
+  });
+};
+
+export const resetDatabase = async (params?: {
+  host?: string;
+  port?: number;
+  password?: string;
+}) => {
+  const { host, port, password } = params || {};
+  console.log("Create database");
+  await clearDatabase({ host, port, password });
+  console.log("Clear users");
+  await execDatabase({
+    host,
+    port,
+    password,
+    query: `
+    drop user if exists supabase_admin;
+    drop user if exists supabase_auth_admin;
+    drop user if exists authenticated;
+    drop user if exists service_role;
+    drop user if exists authenticator;
+    drop user if exists supabase_storage_admin;
+    drop user if exists dashboard_user;
+    drop role if exists service_role;
+    drop role if exists authenticated;
+    drop role if exists anon;
+    drop role if exists supabase_admin;
+  `,
+  });
+  console.log("Initialization of supabase");
+  await execDatabaseFiles({
+    host,
+    port,
+    password,
+    dir: "supabase/docker/volumes/db/init",
+  });
+
+  console.log("Migration of storage-api");
+  await migrateDatabase({
+    host,
+    port,
+    password,
+    dir: "supabase/storage-api",
+    schema: "storage",
+  });
+
+  console.log("Migration of realtime-api");
+  await execDatabaseExsFiles({
+    host,
+    port,
+    password,
+    dir: "supabase/realtime",
+  });
+
+  console.log("Migration of user files");
+  await migrateDatabaseUser({
+    host,
+    port,
+    password,
+    dir: "supabase/migrations",
+  });
 };

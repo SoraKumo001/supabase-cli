@@ -4,6 +4,7 @@ import { backup } from "./commands/backup";
 import { info } from "./commands/info";
 import { init } from "./commands/init";
 import { migration } from "./commands/migration";
+import { remote } from "./commands/remote";
 import { remove } from "./commands/remove";
 import { reset } from "./commands/reset";
 import { restart } from "./commands/restart";
@@ -38,5 +39,5 @@ program
   .addArgument(new Argument("[filename]", "Dump file name").argRequired())
   .action(restore);
 migration(program.command("migration").description("[command]"));
-
+remote(program.command("remote").description("[command]"));
 program.parse(process.argv);
