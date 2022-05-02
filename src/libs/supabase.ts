@@ -1,6 +1,6 @@
 import { promises as fs } from "fs";
 import jwt from "jwt-simple";
-import { getEnv } from "./stdlibs";
+import { getEnv, getRemoteEnv } from "./stdlibs";
 
 export const getAccessKey = async () => {
   const config = await getEnv();
@@ -61,4 +61,19 @@ export const replaceKong = async () => {
       );
     await fs.writeFile(fileName, newFile, "utf8");
   }
+};
+
+export const getSupabaseId = async () => {
+  const config = await getRemoteEnv();
+  if (!config?.url) return undefined;
+  return config.url.match(/https:\/\/(.*).supabase.co/)?.[1];
+};
+
+export const getDatabaseHost = async () => {
+  const id = await getSupabaseId();
+  return id && `db.${id}.supabase.co`;
+};
+export const getDatabasePassword = async () => {
+  const config = await getRemoteEnv();
+  return config?.db_password;
 };

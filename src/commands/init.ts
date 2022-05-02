@@ -38,6 +38,16 @@ export const init = async (forced = false) => {
       "server/priv/repo/migrations",
       "supabase/realtime"
     );
+    if (!(await fs.stat("supabase/.env.remote").catch(() => undefined))) {
+      fs.writeFile(
+        "supabase/.env.remote",
+        "url=\nservice_role=\ndb_password=\n",
+        "utf8"
+      );
+    }
+    if (!(await fs.stat("supabase/.gitignore").catch(() => undefined))) {
+      fs.writeFile("supabase/.gitignore", ".env.remote\n", "utf8");
+    }
   }
   await replaceEnv();
   await replaceKong();

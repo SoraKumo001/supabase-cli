@@ -31,11 +31,27 @@ Commands:
     create [name]     Create migration
     up                Apply migrations
   remote              [command]
-    restore <host> <password> <filename>  Restore remote databases
-    backup <host> <password> <filename>   Backup remote databases
-    migration <host> <password>           Migration remote databases
-    reset <host> <password>               Reset the remote
+    restore [options] <filename> Restore remote databases
+      -a, --host <host>          Host address of database
+      -p, --password <password>  Password for database
+    backup [options] <filename>  Backup remote databases
+      -a, --host <host>          Host address of database
+      -p, --password <password>  Password for database
+    migration [options]          Migration remote databases
+      -a, --host <host>          Host address of database
+      -p, --password <password>  Password for database
+    reset [options]              Reset the remote
+      -a, --host <host>          Host address of database
+      -p, --password <password>  Password for database
   help [command]  display help for command
+```
+
+Remote commands refer to the value of `supabase/.env.remote`
+
+```env
+url=https://xxxxx.supabase.co
+service_role=xxxx
+db_password="xxxx"
 ```
 
 ## For remote backup and remote reset
