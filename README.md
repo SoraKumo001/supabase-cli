@@ -27,6 +27,7 @@ Commands:
   restore <filename>  Restore database
   user                [command]
     create <email> <password>  Create a user
+    list                       Displaying the user list
   migration           [command]
     create [name]     Create migration
     up                Apply migrations
@@ -44,7 +45,10 @@ Commands:
       -a, --host <host>          Host address of database
       -p, --password <password>  Password for database
     user                         [command]
-      create <email> <password>            Create a user
+      create <email> <password>            Create a remote user
+        -u, --url <url>                    Url of supabase
+        -k, --service_role <service_role>  Service role of supabase
+      list [options]                       Display of remote user list
         -u, --url <url>                    Url of supabase
         -k, --service_role <service_role>  Service role of supabase
   help [command]  display help for command

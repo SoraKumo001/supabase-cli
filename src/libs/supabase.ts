@@ -111,3 +111,23 @@ export const createUser = async ({
     .catch((e) => console.error(e));
   console.log(JSON.stringify(result, undefined, "  "));
 };
+
+export const getUsers = async ({
+  url,
+  apiKey,
+}: {
+  url: string;
+  apiKey: string;
+}) => {
+  const result = await fetch(`${url}/auth/v1/admin/users/`, {
+    headers: {
+      "Content-Type": "text/plain;charset=UTF-8",
+      accept: "application/json",
+      apiKey,
+      Authorization: `Bearer ${apiKey}`,
+    },
+  })
+    .then((r) => r.json())
+    .catch((e) => console.error(e));
+  console.log(JSON.stringify(result, undefined, "  "));
+};
