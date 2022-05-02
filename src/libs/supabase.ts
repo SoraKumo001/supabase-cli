@@ -1,4 +1,5 @@
 import { promises as fs } from "fs";
+import fetch from "cross-fetch";
 import jwt from "jwt-simple";
 import { getEnv, getRemoteEnv } from "./stdlibs";
 
@@ -62,18 +63,51 @@ export const replaceKong = async () => {
     await fs.writeFile(fileName, newFile, "utf8");
   }
 };
+export const getSupabaseUrl = async () => (await getRemoteEnv())?.url;
 
 export const getSupabaseId = async () => {
-  const config = await getRemoteEnv();
-  if (!config?.url) return undefined;
-  return config.url.match(/https:\/\/(.*).supabase.co/)?.[1];
+  const url = await getSupabaseUrl();
+  return url?.match(/https:\/\/(.*).supabase.co/)?.[1];
 };
 
 export const getDatabaseHost = async () => {
   const id = await getSupabaseId();
   return id && `db.${id}.supabase.co`;
 };
-export const getDatabasePassword = async () => {
-  const config = await getRemoteEnv();
-  return config?.db_password;
+export const getDatabasePassword = async () =>
+  (await getRemoteEnv())?.db_password;
+
+export const getSupabaseServiceRole = async () =>
+  (await getRemoteEnv())?.service_role;
+
+export const createUser = async ({
+  url,
+  apiKey,
+  email,
+  password,
+}: {
+  url: string;
+  apiKey: string;
+  email: string;
+  password: string;
+}) => {
+  const body = JSON.stringify({
+    email,
+    password,
+    email_confirm: true,
+    user_metadata: { name: email },
+  });
+  const result = await fetch(`${url}/auth/v1/admin/users/`, {
+    method: "POST",
+    body,
+    headers: {
+      "Content-Type": "text/plain;charset=UTF-8",
+      accept: "application/json",
+      apiKey,
+      Authorization: `Bearer ${apiKey}`,
+    },
+  })
+    .then((r) => r.json())
+    .catch((e) => console.error(e));
+  console.log(JSON.stringify(result, undefined, "  "));
 };

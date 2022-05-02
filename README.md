@@ -43,6 +43,10 @@ Commands:
     reset [options]              Reset the remote
       -a, --host <host>          Host address of database
       -p, --password <password>  Password for database
+    user                         [command]
+      create <email> <password>            Create a user
+        -u, --url <url>                    Url of supabase
+        -k, --service_role <service_role>  Service role of supabase
   help [command]  display help for command
 ```
 

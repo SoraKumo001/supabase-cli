@@ -3,6 +3,7 @@ import { backup } from "./backup";
 import { migration } from "./migration";
 import { reset } from "./reset";
 import { restore } from "./restore";
+import { user } from "./user";
 
 export const remote = (c: Command) => {
   c.command("restore")
@@ -28,4 +29,5 @@ export const remote = (c: Command) => {
     .addOption(new Option("-a, --host <host>", "Host address of database"))
     .addOption(new Option("-p, --password <password>", "Password for database"))
     .action(reset);
+  user(c.command("user").description("[command]"));
 };
