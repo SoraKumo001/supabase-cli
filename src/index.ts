@@ -13,6 +13,7 @@ import { restore } from "./commands/restore";
 import { start } from "./commands/start";
 import { stop } from "./commands/stop";
 import { update } from "./commands/update";
+import { user } from "./commands/user";
 
 program.version(process.env.npm_package_version || "unknown");
 program
@@ -39,6 +40,7 @@ program
   .description("Restore database")
   .addArgument(new Argument("[filename]", "Dump file name").argRequired())
   .action(restore);
+user(program.command("user").description("[command]"));
 migration(program.command("migration").description("[command]"));
 remote(program.command("remote").description("[command]"));
 program.parse(process.argv);

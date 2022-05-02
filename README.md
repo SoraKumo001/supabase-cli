@@ -25,6 +25,8 @@ Commands:
   info                View access to supabase
   backup <filename>   Backup database
   restore <filename>  Restore database
+  user                [command]
+    create <email> <password>  Create a user
   migration           [command]
     create [name]     Create migration
     up                Apply migrations

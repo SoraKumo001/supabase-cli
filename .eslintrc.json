@@ -31,9 +31,9 @@
       "error",
       {
         "groups": [
-          "builtin", // 組み込みモジュール
-          "external", // npmでインストールした外部ライブラリ
-          "internal", // 自作モジュール
+          "builtin",
+          "external",
+          "internal",
           [
             "parent",
             "sibling"
@@ -46,10 +46,10 @@
           "builtin"
         ],
         "alphabetize": {
-          "order": "asc", // 昇順にソート
-          "caseInsensitive": true // 小文字大文字を区別する 
+          "order": "asc",
+          "caseInsensitive": true
         },
-        "pathGroups": [ // 指定した順番にソートされる
+        "pathGroups": [
           {
             "pattern": "@/components/common",
             "group": "internal",
