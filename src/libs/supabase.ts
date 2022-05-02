@@ -1,6 +1,6 @@
+import { promises as fs } from "fs";
 import jwt from "jwt-simple";
 import { getEnv } from "./stdlibs";
-import { promises as fs } from "fs";
 
 export const getAccessKey = async () => {
   const config = await getEnv();

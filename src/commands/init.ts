@@ -1,6 +1,7 @@
-import { isDirectory } from "../libs/stdlibs";
 import { promises as fs } from "fs";
+import path from "path";
 import { downloadGitHubFiles } from "../libs/github";
+import { isDirectory } from "../libs/stdlibs";
 import { replaceEnv, replaceKong } from "../libs/supabase";
 
 export const init = async (forced = false) => {
@@ -10,7 +11,17 @@ export const init = async (forced = false) => {
       "https://github.com/supabase/supabase",
       "master",
       "docker/",
-      "supabase/docker"
+      "supabase/docker",
+      {
+        onDownload: async (src, dest) => {
+          if (path.basename(src) === ".gitignore") {
+            if (await fs.stat(dest).catch(() => undefined)) {
+              return false;
+            }
+          }
+          return true;
+        },
+      }
     );
     if (!(await fs.stat("supabase/docker/.env").catch(() => undefined)))
       fs.copyFile("supabase/docker/.env.example", "supabase/docker/.env");

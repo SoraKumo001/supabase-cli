@@ -1,8 +1,8 @@
 import { Argument, Command } from "commander";
-import { migration } from "./migration";
 import { backup } from "./backup";
-import { restore } from "./restore";
+import { migration } from "./migration";
 import { reset } from "./reset";
+import { restore } from "./restore";
 
 export const remote = (c: Command) => {
   c.command("restore")

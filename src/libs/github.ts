@@ -1,7 +1,7 @@
-import fetch from "cross-fetch";
-import path from "path";
 import { promises as fs } from "fs";
+import path from "path";
 import { promiseLimit } from "@node-libraries/promise-limit";
+import fetch from "cross-fetch";
 
 export const getGitHubFileList = (
   repository: string,
@@ -31,7 +31,10 @@ export const downloadGitHubFiles = async (
   outdir: string,
   options?: {
     parallels?: number;
-    onDownload: (file: string) => void;
+    onDownload: (
+      srcFile: string,
+      destFile: string
+    ) => Promise<boolean | undefined | void> | boolean | undefined | void;
   }
 ) =>
   getGitHubFileList(repository, branch).then(async (files) => {
@@ -40,18 +43,19 @@ export const downloadGitHubFiles = async (
       const ps = promiseLimit();
       for (const file of files.filter((v) => v.startsWith(src))) {
         ps.add(async () => {
-          const value = await fetch(
-            `https://raw.githubusercontent.com/${repo}/${branch}/${file}`
-          ).then((v) => v.blob());
-          if (value) {
-            options?.onDownload?.(file);
-            const target = path.resolve(outdir, path.relative(src, file));
-            const targetDir = path.dirname(target);
-            if (target) {
-              await fs
-                .mkdir(targetDir, { recursive: true })
-                .catch(() => undefined);
-              await fs.writeFile(target, value.stream());
+          const target = path.resolve(outdir, path.relative(src, file));
+          if ((await options?.onDownload?.(file, target)) !== false) {
+            const value = await fetch(
+              `https://raw.githubusercontent.com/${repo}/${branch}/${file}`
+            ).then((v) => v.blob());
+            if (value) {
+              const targetDir = path.dirname(target);
+              if (target) {
+                await fs
+                  .mkdir(targetDir, { recursive: true })
+                  .catch(() => undefined);
+                await fs.writeFile(target, value.stream());
+              }
             }
           }
         });

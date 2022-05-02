@@ -1,7 +1,7 @@
-import { init } from "./init";
+import { migrateDatabaseUser } from "../libs/database";
 import { execDocker } from "../libs/docker";
 import { outputStatus } from "../libs/supabase";
-import { migrateDatabaseUser } from "../libs/database";
+import { init } from "./init";
 
 export const start = async () => {
   await init();

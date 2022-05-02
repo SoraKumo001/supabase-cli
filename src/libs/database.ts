@@ -1,7 +1,8 @@
 import { promises as fs, openSync, closeSync } from "fs";
-import { getEnv, spawn } from "./stdlibs";
+import path from "path";
 import { Client, ClientConfig } from "pg";
 import { migrate } from "postgres-migrations";
+import { getEnv, spawn } from "./stdlibs";
 
 export const execDatabase = async ({
   host,
@@ -66,14 +67,11 @@ export const execDatabaseExsFiles = async ({
   dir: string;
 }) => {
   const files = await (await fs.readdir(dir).catch(() => [])).sort();
-  await execDatabase({
+  await execResourceDatabase({
     host,
     port,
     password,
-    query: `create table IF NOT EXISTS realtime.schema_migrations (
-    version bigint not null
-    , inserted_at timestamp(0) without time zone
-    , primary key (version));`,
+    fileName: "create_realtime_migration.sql",
   });
   for (const file of files) {
     console.log("  " + file);
@@ -84,7 +82,7 @@ export const execDatabaseExsFiles = async ({
       const sqls = [...value.matchAll(/execute.*?"([\s\S]*?[^\\])"/gm)].map(
         (v) => v[1].replace(/^[ ]*/gm, "")
       );
-      for (const sql of sqls) await execDatabase({ query: sql });
+      for (const query of sqls) await execDatabase({ query });
       const id = file.match(/([^/\\]*?)_.*$/)?.[1];
       id &&
         (await execDatabase({
@@ -317,7 +315,28 @@ $$;
     query: "DROP DATABASE IF EXISTS old;",
   });
 };
-
+export const execResourceDatabase = async ({
+  host,
+  port,
+  password,
+  fileName,
+}: {
+  host?: string;
+  port?: number;
+  password?: string;
+  fileName: string;
+}) => {
+  const query = await fs
+    .readFile(path.resolve(__dirname, "../..", "resources", fileName), "utf8")
+    .catch((e) => console.error(e));
+  if (!query) return false;
+  return await execDatabase({
+    host,
+    port,
+    password,
+    query,
+  });
+};
 export const resetDatabase = async (params?: {
   host?: string;
   port?: number;
@@ -327,23 +346,11 @@ export const resetDatabase = async (params?: {
   console.log("Create database");
   await clearDatabase({ host, port, password });
   console.log("Clear users");
-  await execDatabase({
+  await execResourceDatabase({
     host,
     port,
     password,
-    query: `
-    drop user if exists supabase_admin;
-    drop user if exists supabase_auth_admin;
-    drop user if exists authenticated;
-    drop user if exists service_role;
-    drop user if exists authenticator;
-    drop user if exists supabase_storage_admin;
-    drop user if exists dashboard_user;
-    drop role if exists service_role;
-    drop role if exists authenticated;
-    drop role if exists anon;
-    drop role if exists supabase_admin;
-  `,
+    fileName: "clear_users.sql",
   });
   console.log("Initialization of supabase");
   await execDatabaseFiles({
@@ -352,18 +359,11 @@ export const resetDatabase = async (params?: {
     password,
     dir: "supabase/docker/volumes/db/init",
   });
-  await execDatabase({
+  await execResourceDatabase({
     host,
     port,
     password,
-    query: `
-ALTER TABLE auth.users add IF NOT EXISTS reauthentication_token character varying(255) default '';
-ALTER TABLE auth.users add IF NOT EXISTS reauthentication_sent_at timestamp(6) with time zone;
-ALTER ROLE authenticator WITH NOSUPERUSER NOINHERIT NOCREATEROLE NOCREATEDB LOGIN NOREPLICATION NOBYPASSRLS PASSWORD 'SCRAM-SHA-256$4096:02GshyCgAmMuR80elRG3zA==$iGHHc+ke7uTIAH3R81LB96RSHK3mQBqpgntQYKWYbEc=:omgA+pHNI9zhml67pswdvF8wxr4X9McFVMXskcjshkQ=';
-ALTER ROLE supabase_admin WITH SUPERUSER INHERIT CREATEROLE CREATEDB LOGIN REPLICATION BYPASSRLS PASSWORD 'SCRAM-SHA-256$4096:Ek3JpfTwntQPt3nH8RX/nQ==$gR2VWqVgd184dcWFO1VuxfvS54Kc1nHO28GOgoyNef0=:4/u9yjgNAsxn/Ef8CCdsL9YrEWhlH1GK2k3K4Wr+xoI=';
-ALTER ROLE supabase_auth_admin WITH NOSUPERUSER NOINHERIT CREATEROLE NOCREATEDB LOGIN NOREPLICATION NOBYPASSRLS PASSWORD 'SCRAM-SHA-256$4096:KwpL1tST/0JDjAM20fXN7g==$5ogPaRAdtoXGJYD4a5CKnR/IpBpO/QvNGdBQ82TtG/Q=:pnEvyPekmXg9GaTXRBUzlIoo4WrDRtCA8qO0MvGat2Y=';
-ALTER ROLE supabase_storage_admin WITH NOSUPERUSER NOINHERIT CREATEROLE NOCREATEDB LOGIN NOREPLICATION NOBYPASSRLS PASSWORD 'SCRAM-SHA-256$4096:I5FEUDziWXHfELobqERsug==$Kia0Uk1GsB7PaotwpFQmCZHL4IDx69hP+b/qNP2TW4c=:jZDB9li42uENmR1UrYKXTy+gMC6025YSq9+2q7rBUDk=';
-`,
+    fileName: "restore_users.sql",
   });
   console.log("Migration of storage-api");
   await migrateDatabase({
@@ -385,12 +385,6 @@ ALTER ROLE supabase_storage_admin WITH NOSUPERUSER NOINHERIT CREATEROLE NOCREATE
   }
 
   console.log("Migration of user files");
-  await migrateDatabaseUser({
-    host,
-    port,
-    password,
-    dir: "supabase/migrations",
-  });
   await migrateDatabaseUser({
     host,
     port,

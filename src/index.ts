@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { Argument, program } from "commander";
+
 import { backup } from "./commands/backup";
 import { info } from "./commands/info";
 import { init } from "./commands/init";
