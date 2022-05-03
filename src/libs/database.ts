@@ -214,7 +214,54 @@ export const migrateDatabaseUser = async ({
     await client.end();
   }
 };
+export const migrateDatabaseGotrue = async ({
+  host,
+  port,
+  dbname,
+  password,
+  dir,
+}: {
+  host?: string;
+  port?: number;
+  dbname?: string;
+  password?: string;
+  dir: string;
+}) => {
+  const files = await (await fs.readdir(dir).catch(() => [])).sort();
+  const client = await getClient({ host, port, dbname, password });
+  if (!client) return false;
+  try {
+    await client.query(`SET search_path to auth`);
+    for (const file of files) {
+      const value = await fs
+        .readFile(`${dir}/${file}`, "utf8")
+        .catch(() => undefined);
 
+      if (value) {
+        const id = file?.match(/^(.*?)_/)?.[1];
+        if (!id) continue;
+        const r = await client.query(
+          `select true from auth.schema_migrations where version=$1`,
+          [id]
+        );
+        if (r.rowCount === 0) {
+          console.log("  " + file);
+          await client.query("begin;");
+          if (!(await client.query(value))) {
+            await client.query("rollback;");
+            break;
+          }
+          await client.query(`insert into auth.schema_migrations values($1)`, [
+            id,
+          ]);
+          await client.query("commit;");
+        }
+      }
+    }
+  } finally {
+    await client.end();
+  }
+};
 export const dumpDatabase = async ({
   host,
   port,
@@ -373,6 +420,13 @@ export const resetDatabase = async (params?: {
     password,
     dir: "supabase/storage-api",
     schema: "storage",
+  });
+  console.log("Migration of gotrue-api");
+  await migrateDatabaseGotrue({
+    host,
+    port,
+    password,
+    dir: "supabase/gotrue",
   });
 
   if (!host) {

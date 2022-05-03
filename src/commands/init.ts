@@ -33,6 +33,12 @@ export const init = async (forced = false) => {
       "supabase/storage-api"
     );
     await downloadGitHubFiles(
+      "https://github.com/supabase/gotrue",
+      "master",
+      "migrations",
+      "supabase/gotrue"
+    );
+    await downloadGitHubFiles(
       "https://github.com/supabase/realtime",
       "master",
       "server/priv/repo/migrations",
