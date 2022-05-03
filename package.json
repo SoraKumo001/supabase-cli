@@ -1,6 +1,6 @@
 {
   "name": "supabase-cli",
-  "version": "0.0.11",
+  "version": "0.0.12",
   "main": "dist/index.js",
   "license": "MIT",
   "scripts": {
@@ -37,6 +37,6 @@
     "supabase",
     "cli"
   ],
-  "repository": "https://github.com/SoraKumo001/supabase",
+  "repository": "https://github.com/SoraKumo001/supabase-cli",
   "author": "SoraKumo <info@croud.jp>"
 }
