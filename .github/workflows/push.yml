@@ -44,8 +44,6 @@ jobs:
     name: Build
     needs: Modules
     runs-on: ubuntu-latest
-    env:
-      SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
     steps:
       - uses: actions/checkout@v3
       - name: Cache modules(yarn.lock)
@@ -55,5 +53,5 @@ jobs:
           path: node_modules
           key: ${{ runner.OS }}-build-${{ hashFiles('yarn.lock') }}
           restore-keys: ${{ runner.OS }}-build-${{ env.cache-name }}
-      - name: Build Production
+      - name: Build
         run: yarn build
