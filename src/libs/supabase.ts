@@ -1,10 +1,19 @@
 import { promises as fs } from "fs";
 import fetch from "cross-fetch";
+import { parse } from "dotenv";
 import jwt from "jwt-simple";
-import { getEnv, getRemoteEnv } from "./stdlibs";
+
+export const getSupabaseEnv = async () => {
+  const file = await fs.readFile("supabase/docker/.env").catch(() => undefined);
+  return file && parse(file);
+};
+export const getRemoteEnv = async () => {
+  const file = await fs.readFile("supabase/.env.remote").catch(() => undefined);
+  return file && parse(file);
+};
 
 export const getAccessKey = async () => {
-  const config = await getEnv();
+  const config = await getSupabaseEnv();
   if (!config) return {};
   const { JWT_SECRET } = config;
   const ANON_KEY = jwt.encode(
@@ -25,7 +34,7 @@ export const getAccessKey = async () => {
 };
 
 export const outputStatus = async () => {
-  const config = await getEnv();
+  const config = await getSupabaseEnv();
 
   if (config) {
     const { STUDIO_PORT, KONG_HTTP_PORT, ANON_KEY, SERVICE_ROLE_KEY } = config;
@@ -46,7 +55,7 @@ export const replaceEnv = async () => {
     const newFile = file
       .replace(/^ANON_KEY=.*/m, `ANON_KEY=${ANON_KEY}`)
       .replace(/^SERVICE_ROLE_KEY=.*/m, `SERVICE_ROLE_KEY=${SERVICE_ROLE_KEY}`);
-    await fs.writeFile(fileName, newFile, "utf8");
+    newFile !== file && (await fs.writeFile(fileName, newFile, "utf8"));
   }
 };
 export const replaceKong = async () => {
@@ -60,7 +69,7 @@ export const replaceKong = async () => {
         /(- username: service_role[\s\S]*?- key: )(.*)/m,
         `$1${SERVICE_ROLE_KEY}`
       );
-    await fs.writeFile(fileName, newFile, "utf8");
+    newFile !== file && (await fs.writeFile(fileName, newFile, "utf8"));
   }
 };
 export const getSupabaseUrl = async () => (await getRemoteEnv())?.url;

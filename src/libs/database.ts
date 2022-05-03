@@ -2,7 +2,8 @@ import { promises as fs, openSync, closeSync } from "fs";
 import path from "path";
 import { Client, ClientConfig } from "pg";
 import { migrate } from "postgres-migrations";
-import { getEnv, spawn } from "./stdlibs";
+import { spawn } from "./stdlibs";
+import { getSupabaseEnv } from "./supabase";
 
 export const execDatabase = async ({
   host,
@@ -107,7 +108,7 @@ export const getClient = async (params?: {
     dbname = "postgres",
     password: passwordSrc,
   } = params || {};
-  const config = await getEnv();
+  const config = await getSupabaseEnv();
   const password = passwordSrc || config?.POSTGRES_PASSWORD;
   const port = portSrc || Number(config?.POSTGRES_PORT);
   const dbConfig: ClientConfig = {

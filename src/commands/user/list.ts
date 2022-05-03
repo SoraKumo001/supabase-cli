@@ -1,8 +1,7 @@
-import { getEnv } from "../../libs/stdlibs";
-import { getUsers } from "../../libs/supabase";
+import { getUsers, getSupabaseEnv } from "../../libs/supabase";
 
 export const list = async () => {
-  const config = await getEnv();
+  const config = await getSupabaseEnv();
   if (!config) return;
   const apiKey = config.SERVICE_ROLE_KEY;
   const port = config.KONG_HTTP_PORT;
