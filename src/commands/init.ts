@@ -1,10 +1,11 @@
 import { promises as fs } from "fs";
 import path from "path";
+import { program } from "commander";
 import { downloadGitHubFiles } from "../libs/github";
 import { isDirectory } from "../libs/stdlibs";
 import { replaceEnv, replaceKong } from "../libs/supabase";
 
-export const init = async (forced = false) => {
+export const initSupabase = async (forced = false) => {
   if (!isDirectory("supabase") || forced) {
     await fs.mkdir("supabase").catch(() => undefined);
     await downloadGitHubFiles(
@@ -58,3 +59,10 @@ export const init = async (forced = false) => {
   await replaceEnv();
   await replaceKong();
 };
+
+export const init = program
+  .createCommand("init")
+  .description("Initialize supabase")
+  .action(() => {
+    initSupabase(true);
+  });

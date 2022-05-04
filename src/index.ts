@@ -1,6 +1,5 @@
 #!/usr/bin/env node
-import { Argument, program } from "commander";
-
+import { program } from "commander";
 import { backup } from "./commands/backup";
 import { info } from "./commands/info";
 import { init } from "./commands/init";
@@ -16,31 +15,17 @@ import { update } from "./commands/update";
 import { user } from "./commands/user";
 
 program.version(process.env.npm_package_version || "unknown");
-program
-  .command("init")
-  .description("Initialize supabase")
-  .action(() => {
-    init(true);
-  });
-
-program.command("start").description("Launch supabase").action(start);
-program.command("stop").description("Stop supabase").action(stop);
-program.command("restart").description("Restart supabase").action(restart);
-program.command("remove").description("Remove supabase").action(remove);
-program.command("update").description("Update supabase").action(update);
-program.command("reset").description("Database initialization").action(reset);
-program.command("info").description("View access to supabase").action(info);
-program
-  .command("backup")
-  .description("Backup database")
-  .addArgument(new Argument("[filename]", "Dump file name").argRequired())
-  .action(backup);
-program
-  .command("restore")
-  .description("Restore database")
-  .addArgument(new Argument("[filename]", "Dump file name").argRequired())
-  .action(restore);
-user(program.command("user").description("[command]"));
-migration(program.command("migration").description("[command]"));
-remote(program.command("remote").description("[command]"));
+program.addCommand(init);
+program.addCommand(start);
+program.addCommand(stop);
+program.addCommand(restart);
+program.addCommand(remove);
+program.addCommand(update);
+program.addCommand(reset);
+program.addCommand(info);
+program.addCommand(backup);
+program.addCommand(restore);
+program.addCommand(user);
+program.addCommand(remote);
+program.addCommand(migration);
 program.parse(process.argv);

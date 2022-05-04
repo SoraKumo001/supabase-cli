@@ -1,7 +1,8 @@
+import { Argument, program, Option } from "commander";
 import { dumpDatabase } from "../../libs/database";
 import { getDatabaseHost, getDatabasePassword } from "../../libs/supabase";
 
-export const backup = async (
+export const action = async (
   fileName: string,
   options: { host?: string; password?: string }
 ) => {
@@ -17,3 +18,11 @@ export const backup = async (
   }
   await dumpDatabase({ host, port: 5432, password, fileName });
 };
+
+export const backup = program
+  .createCommand("backup")
+  .description("Backup remote databases")
+  .addOption(new Option("-a, --host <host>", "Host address of database"))
+  .addOption(new Option("-p, --password <password>", "Password for database"))
+  .addArgument(new Argument("filename", "Dump file").argRequired())
+  .action(action);

@@ -1,10 +1,11 @@
+import { Argument, program, Option } from "commander";
 import {
   createUser,
   getSupabaseServiceRole,
   getSupabaseUrl,
 } from "../../../libs/supabase";
 
-export const create = async (
+export const action = async (
   email: string,
   password: string,
   options: { url?: string; service_role?: string }
@@ -26,3 +27,14 @@ export const create = async (
     password,
   });
 };
+
+export const create = program
+  .createCommand("create")
+  .description("Create a remote user")
+  .addOption(new Option("-u, --url <url>", "Url of supabase"))
+  .addOption(
+    new Option("-k, --service_role <service_role>", "Service role of supabase")
+  )
+  .addArgument(new Argument("email", "User's email address").argRequired())
+  .addArgument(new Argument("password", "User Password").argRequired())
+  .action(action);

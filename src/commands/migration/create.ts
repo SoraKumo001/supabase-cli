@@ -1,5 +1,6 @@
 import { promises as fs } from "fs";
-export const create = async (name?: string) => {
+import { Argument, program } from "commander";
+export const action = async (name?: string) => {
   await fs.mkdir("supabase/migrations").catch(() => undefined);
 
   const fileName =
@@ -15,3 +16,9 @@ export const create = async (name?: string) => {
       .replace(/[/: ]/g, "") + (name ? `_${name}` : "");
   fs.writeFile(`supabase/migrations/${fileName}.sql`, "");
 };
+
+export const create = program
+  .createCommand("create")
+  .description("Create migration")
+  .addArgument(new Argument("[name]", "Migration name"))
+  .action(action);

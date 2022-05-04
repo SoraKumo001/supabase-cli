@@ -1,5 +1,11 @@
+import { Argument, program } from "commander";
 import { dumpDatabase } from "../libs/database";
 
-export const backup = async (fileName: string) => {
+export const backupSupabase = async (fileName: string) => {
   dumpDatabase({ fileName });
 };
+
+export const backup = program
+  .createCommand("Backup database")
+  .addArgument(new Argument("[filename]", "Dump file name").argRequired())
+  .action(backupSupabase);

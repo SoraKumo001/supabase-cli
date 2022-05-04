@@ -1,10 +1,11 @@
+import { program } from "commander";
 import { migrateDatabaseUser } from "../libs/database";
 import { execDocker } from "../libs/docker";
 import { outputStatus } from "../libs/supabase";
-import { init } from "./init";
+import { initSupabase } from "./init";
 
-export const start = async () => {
-  await init();
+export const startSupabase = async () => {
+  await initSupabase();
   await execDocker("up -d");
   await outputStatus();
 
@@ -13,3 +14,8 @@ export const start = async () => {
     dir: "supabase/migrations",
   });
 };
+
+export const start = program
+  .createCommand("start")
+  .description("Launch supabase")
+  .action(startSupabase);

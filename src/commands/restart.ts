@@ -1,6 +1,11 @@
-import { start } from "./start";
-import { stop } from "./stop";
-export const restart = async () => {
-  await stop();
-  await start();
-};
+import { program } from "commander";
+import { startSupabase } from "./start";
+import { stopSupabase } from "./stop";
+
+export const restart = program
+  .createCommand("restart")
+  .description("Restart supabase")
+  .action(async () => {
+    await stopSupabase();
+    await startSupabase();
+  });

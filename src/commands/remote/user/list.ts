@@ -1,10 +1,11 @@
+import { program, Option } from "commander";
 import {
   getSupabaseServiceRole,
   getSupabaseUrl,
   getUsers,
 } from "../../../libs/supabase";
 
-export const list = async (options: {
+export const action = async (options: {
   url?: string;
   service_role?: string;
 }) => {
@@ -20,3 +21,12 @@ export const list = async (options: {
   }
   getUsers({ url, apiKey });
 };
+
+export const list = program
+  .createCommand("list")
+  .description("Display of remote user list")
+  .addOption(new Option("-u, --url <url>", "Url of supabase"))
+  .addOption(
+    new Option("-k, --service_role <service_role>", "Service role of supabase")
+  )
+  .action(action);
