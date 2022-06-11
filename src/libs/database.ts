@@ -418,7 +418,7 @@ export const resetDatabase = async (params?: {
     host,
     port,
     password,
-    dir: "supabase/storage-api",
+    dir: "supabase/system-migrations/storage-api",
     schema: "storage",
   });
   console.log("Migration of gotrue-api");
@@ -426,7 +426,7 @@ export const resetDatabase = async (params?: {
     host,
     port,
     password,
-    dir: "supabase/gotrue",
+    dir: "supabase/system-migrations/gotrue",
   });
 
   if (!host) {
@@ -435,7 +435,7 @@ export const resetDatabase = async (params?: {
       host,
       port,
       password,
-      dir: "supabase/realtime",
+      dir: "supabase/system-migrations/realtime",
     });
   }
 

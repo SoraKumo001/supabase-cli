@@ -31,19 +31,19 @@ export const initSupabase = async (forced = false) => {
       "https://github.com/supabase/storage-api",
       "master",
       "migrations/tenant/",
-      "supabase/storage-api"
+      "supabase/system-migrations/storage-api"
     );
     await downloadGitHubFiles(
       "https://github.com/supabase/gotrue",
       "master",
       "migrations",
-      "supabase/gotrue"
+      "supabase/system-migrations/gotrue"
     );
     await downloadGitHubFiles(
       "https://github.com/supabase/realtime",
       "master",
       "server/priv/repo/migrations",
-      "supabase/realtime"
+      "supabase/system-migrations/realtime"
     );
     if (!(await fs.stat("supabase/.env.remote").catch(() => undefined))) {
       fs.writeFile(

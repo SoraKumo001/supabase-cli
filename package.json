@@ -1,6 +1,6 @@
 {
   "name": "supabase-cli",
-  "version": "0.0.16",
+  "version": "0.0.17",
   "main": "dist/index.js",
   "license": "MIT",
   "scripts": {
@@ -12,7 +12,7 @@
     "supabase-cli": "dist/index.js"
   },
   "devDependencies": {
-    "@types/node": "^17.0.40",
+    "@types/node": "^17.0.42",
     "@types/pg": "^8.6.5",
     "@typescript-eslint/eslint-plugin": "^5.27.1",
     "@typescript-eslint/parser": "^5.27.1",

@@ -89,7 +89,7 @@ For the second and subsequent runs, the file is updated.
 - https://github.com/supabase/supabase/tree/master/docker
   - `.gitignore` will not be overwritten
 - https://github.com/supabase/storage-api/tree/master/migrations/tenant/
-- https://github.com/supabase/realtime//tree/master/server/priv/repo/migrations
+- https://github.com/supabase/realtime/tree/master/server/priv/repo/migrations
 
 #### 2. Creation of `supabase/docker/.env`
 
