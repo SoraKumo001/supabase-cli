@@ -43,7 +43,13 @@ export const initSupabase = async (forced = false) => {
       "https://github.com/supabase/realtime",
       "master",
       "server/priv/repo/migrations",
-      "supabase/system-migrations/realtime"
+      "supabase/system-migrations/realtime",
+      {
+        onDownload: (src) => {
+          // stopgap measure
+          return Number(src.match(/\/(\d+)_/)?.[1]) < 20220603231003;
+        },
+      }
     );
     if (!(await fs.stat("supabase/.env.remote").catch(() => undefined))) {
       fs.writeFile(

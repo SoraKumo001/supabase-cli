@@ -121,3 +121,12 @@ supabase-cli stop
 ```sh
 supabase-cli remove
 ```
+
+### important point
+
+After applying the following migrations, realtime functions will no longer work.  
+The current version has been modified to not include them in system-migrations.
+
+- 20220603231003_add_quoted_regtypes_support.exs
+- 20220603232444_add_output_for_data_less_than_equal_64_bytes_when_payload_too_large.exs
+- 20220615214548_add_quoted_regtypes_backward_compatibility_support.exs
