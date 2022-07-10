@@ -23,6 +23,7 @@ Commands:
   update              Update supabase
   reset               Database initialization
   info                View access to supabase
+  regions                     List of region
   backup <filename>   Backup database
   restore <filename>  Restore database
   user                [command]
@@ -51,6 +52,17 @@ Commands:
       list [options]                       Display of remote user list
         -u, --url <url>                    Url of supabase
         -k, --service_role <service_role>  Service role of supabase
+  project
+      list [options]
+        -t, --token <accessToken>  AccessToken
+      create [options] name dbpass
+        -t, --token <accessToken>  AccessToken
+        -p, --plan <plan>          Plan of project
+        -r, --region <region>      Region of project
+        -o, --org <org>            Organization of project
+  organization
+      list [options]
+        -t, --token <accessToken>  AccessToken
   help [command]  display help for command
 ```
 
@@ -59,7 +71,8 @@ Remote commands refer to the value of `supabase/.env.remote`
 ```env
 url=https://xxxxx.supabase.co
 service_role=xxxx
-db_password="xxxx"
+db_password=xxxx
+access_token=xxxx
 ```
 
 ## For remote backup and remote reset

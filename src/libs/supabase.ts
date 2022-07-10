@@ -2,6 +2,7 @@ import { promises as fs } from "fs";
 import fetch from "cross-fetch";
 import { parse } from "dotenv";
 import jwt from "jwt-simple";
+import { PROVIDERS, REGIONS } from "../enums/infrastructure";
 
 export const getSupabaseEnv = async () => {
   const file = await fs.readFile("supabase/docker/.env").catch(() => undefined);
@@ -139,4 +140,113 @@ export const getUsers = async ({
     .then((r) => r.json())
     .catch((e) => console.error(e));
   console.log(JSON.stringify(result, undefined, "  "));
+};
+
+export const getProjects = async (token: string) => {
+  const result = await fetch("https://api.supabase.io/v1/projects", {
+    headers: {
+      "Content-Type": "application/json",
+      accept: "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  })
+    .then((r) => r.json())
+    .catch((e) => console.error(e));
+  return result;
+};
+export const getOrganizations = async (token: string) => {
+  const result = await fetch("https://api.supabase.io/v1/organizations", {
+    headers: {
+      "Content-Type": "application/json",
+      accept: "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  })
+    .then((r) => r.json())
+    .catch((e) => console.error(e));
+  return (result as { id: string; name: string }[]) || undefined;
+};
+export const createProject = async ({
+  token,
+  organizationId,
+  name,
+  dbPass,
+  region,
+  plan,
+}: {
+  token: string;
+  organizationId: string;
+  name: string;
+  dbPass: string;
+  region: string;
+  plan: string;
+}) => {
+  const result = await fetch("https://api.supabase.io/v1/projects", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      accept: "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({
+      organization_id: organizationId,
+      name,
+      db_pass: dbPass,
+      region,
+      plan,
+    }),
+  })
+    .then((r) => r.json())
+    .catch((e) => console.error(e));
+  console.log(JSON.stringify(result, undefined, "  "));
+};
+export const deleteProject = async ({
+  token,
+  id,
+}: {
+  token: string;
+  id: string;
+}) => {
+  const result = await fetch(
+    `https://api.supabase.io/platform/projects/${id}`,
+    {
+      method: "DELETE",
+      headers: {
+        accept: "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  )
+    .then((r) => r.json())
+    .catch((e) => console.error(e));
+  console.log(JSON.stringify(result, undefined, "  "));
+};
+export const pauseProject = async ({
+  token,
+  id,
+}: {
+  token: string;
+  id: string;
+}) => {
+  const result = await fetch(
+    `https://api.supabase.io/platform/projects/${id}/pause`,
+    {
+      method: "POST",
+      headers: {
+        accept: "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  )
+    .then((r) => r.json())
+    .catch((e) => console.error(e));
+  console.log(JSON.stringify(result, undefined, "  "));
+};
+export const getRegions = () => {
+  return Object.fromEntries(
+    Object.entries(PROVIDERS.AWS.regions).map(([name, region]) => [
+      region,
+      REGIONS[name as keyof typeof REGIONS],
+    ])
+  );
 };
