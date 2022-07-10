@@ -6,6 +6,7 @@ export const backupSupabase = async (fileName: string) => {
 };
 
 export const backup = program
-  .createCommand("Backup database")
+  .createCommand("backup")
+  .description("Backup database")
   .addArgument(new Argument("[filename]", "Dump file name").argRequired())
   .action(backupSupabase);

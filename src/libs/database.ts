@@ -262,6 +262,31 @@ export const migrateDatabaseGotrue = async ({
     await client.end();
   }
 };
+export const dumpTable = async ({
+  host,
+  port,
+  password,
+  tableName,
+  fileName,
+}: {
+  host?: string;
+  port?: number;
+  password?: string;
+  tableName: string;
+  fileName: string;
+}) => {
+  const project = process.env.npm_package_name || "supabase";
+  const stream = openSync(fileName, "w");
+  if (!stream) return false;
+  const code = await spawn(
+    `docker compose -p ${project} -f supabase/docker/docker-compose.yml exec db pg_dump -c -t "${tableName}" --if-exists postgres://postgres${
+      password ? ":" + password : ""
+    }@${host || "localhost"}:${port || 5432}/postgres`,
+    { stdio: ["inherit", stream, "inherit"] }
+  );
+  closeSync(stream);
+  return code === 0;
+};
 export const dumpDatabase = async ({
   host,
   port,
@@ -277,7 +302,7 @@ export const dumpDatabase = async ({
   const stream = openSync(fileName, "w");
   if (!stream) return false;
   const code = await spawn(
-    `docker compose -p ${project} -f supabase/docker/docker-compose.yml exec db pg_dump -c --if-exists postgres://postgres${
+    `docker compose -p ${project} -f supabase/docker/docker-compose.yml exec db pg_dump postgres://postgres${
       password ? ":" + password : ""
     }@${host || "localhost"}:${port || 5432}/postgres`,
     { stdio: ["inherit", stream, "inherit"] }
@@ -285,7 +310,6 @@ export const dumpDatabase = async ({
   closeSync(stream);
   return code === 0;
 };
-
 export const restoreDatabase = async ({
   host,
   port,

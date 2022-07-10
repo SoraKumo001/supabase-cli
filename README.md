@@ -31,6 +31,7 @@ Commands:
     list                       Displaying the user list
   migration           [command]
     create [name]     Create migration
+      -t, --tableName <tableName>  Output table name
     up                Apply migrations
   remote              [command]
     restore [options] <filename> Restore remote databases

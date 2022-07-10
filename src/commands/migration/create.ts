@@ -1,6 +1,10 @@
 import { promises as fs } from "fs";
-import { Argument, program } from "commander";
-export const action = async (name?: string) => {
+import { Argument, program, Option } from "commander";
+import { dumpTable } from "../../libs/database";
+export const action = async (
+  name: string | undefined,
+  { tableName }: { tableName?: string }
+) => {
   await fs.mkdir("supabase/migrations").catch(() => undefined);
 
   const fileName =
@@ -14,11 +18,15 @@ export const action = async (name?: string) => {
     })
       .format(new Date())
       .replace(/[/: ]/g, "") + (name ? `_${name}` : "");
-  fs.writeFile(`supabase/migrations/${fileName}.sql`, "");
+  const filePath = `supabase/migrations/${fileName}.sql`;
+  if (tableName) {
+    dumpTable({ fileName: filePath, tableName });
+  } else fs.writeFile(filePath, "");
 };
 
 export const create = program
   .createCommand("create")
   .description("Create migration")
   .addArgument(new Argument("[name]", "Migration name"))
+  .addOption(new Option("-t, --tableName <tableName>", "Output table name"))
   .action(action);
