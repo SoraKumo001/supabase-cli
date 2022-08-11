@@ -17,7 +17,8 @@ export const action = async (
       second: "2-digit",
     })
       .format(new Date())
-      .replace(/[/: ]/g, "") + (name ? `_${name}` : "");
+      .replace(/[/: ]/g, "") +
+    (name ? `_${name}` : tableName ? `_${tableName}` : "");
   const filePath = `supabase/migrations/${fileName}.sql`;
   if (tableName) {
     dumpTable({ fileName: filePath, tableName });

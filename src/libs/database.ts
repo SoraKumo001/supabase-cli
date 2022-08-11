@@ -279,7 +279,7 @@ export const dumpTable = async ({
   const stream = openSync(fileName, "w");
   if (!stream) return false;
   const code = await spawn(
-    `docker compose -p ${project} -f supabase/docker/docker-compose.yml exec db pg_dump -c -t "${tableName}" --if-exists postgres://postgres${
+    `docker compose -p ${project} -f supabase/docker/docker-compose.yml exec db pg_dump -c -s -t "${tableName}" --if-exists postgres://postgres${
       password ? ":" + password : ""
     }@${host || "localhost"}:${port || 5432}/postgres`,
     { stdio: ["inherit", stream, "inherit"] }
